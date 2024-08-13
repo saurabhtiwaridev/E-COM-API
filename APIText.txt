@@ -7,3 +7,8 @@ ProductController
 3. Get one Product - DONE
 4. rate a product
 5. filter a product - DONE
+
+
+UserController
+1. SignUp - (name, email, password, TypeOfUser[customer, seller])
+2. SignIn - (email, password)
