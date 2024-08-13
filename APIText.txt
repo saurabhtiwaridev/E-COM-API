@@ -1,0 +1,9 @@
+
+
+ProductController
+
+1. Get All Product - DONE
+2. Create a new Product - DONE
+3. Get one Product - DONE
+4. rate a product
+5. filter a product - DONE
