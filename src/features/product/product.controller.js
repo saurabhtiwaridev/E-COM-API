@@ -1,45 +1,131 @@
+import ApplicationError from "../../error-handling/applicationError.js";
 import ProductModel from "./product.model.js";
+import PorductRepository from "./product.repository.js";
 
 export default class ProductController {
-  getAllProducts(req, res) {
-    const products = ProductModel.getAll();
-
-    return res.status(200).send(products);
+  constructor() {
+    this.productRopository = new PorductRepository();
   }
+  async getAllProducts(req, res) {
+    try {
+      const products = await this.productRopository.getAll();
 
-  createNewProduct(req, res) {
-    const { name, desc, price, category, size } = req.body;
-
-    const newProductCreated = {
-      name,
-      desc,
-      price: parseFloat(price),
-      imageUrl: req.file.filename,
-      category,
-      size: size.split(","),
-    };
-    const productCreated = ProductModel.addProduct(newProductCreated);
-    res.status(201).send(productCreated);
-  }
-
-  getOneProduct(req, res) {
-    const { id } = req.params;
-    const product = ProductModel.getProductById(id);
-    if (product) {
-      res.status(200).send(product);
-    } else {
-      res.status(404).send("There is no product added with given id");
+      return res.status(200).send(products);
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError(
+        "error in while fetching all the product",
+        500
+      );
     }
   }
 
-  filterProduct(req, res) {
-    const { minPrice, maxPrice, category } = req.query;
-    console.log(minPrice, maxPrice, category);
+  async createNewProduct(req, res) {
+    try {
+      const { name, desc, price, category, size } = req.body;
 
-    const filteredProduct = ProductModel.filter(minPrice, maxPrice, category);
+      const newProduct = new ProductModel(
+        name,
+        desc,
+        parseFloat(price),
+        req.file.filename,
+        category,
+        size?.split(",")
+      );
 
-    res.status(200).send(filteredProduct);
+      const product = await this.productRopository.addProduct(newProduct);
+      res.status(201).send(product);
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError("error in creating product", 500);
+    }
   }
 
-  rateProduct(req, res) {}
+  async averagePrice(req, res) {
+    try {
+      const result = await this.productRopository.avergaePriceCategoryWise();
+
+      return res.status(200).send(result);
+    } catch (error) {
+      throw new ApplicationError(
+        "error while calculating average price of product , category wise",
+        500
+      );
+    }
+  }
+
+  async averageRatings(req, res) {
+    try {
+      const result = await this.productRopository.averageRatingsOfProducts();
+
+      return res.status(200).send(result);
+    } catch (error) {
+      throw new ApplicationError(
+        "error while calculating average ratings of product , category wise",
+        500
+      );
+    }
+  }
+
+  async countRatings(req, res) {
+    try {
+      const result = await this.productRopository.countOfRatingsProductWise();
+
+      return res.status(200).send(result);
+    } catch (error) {
+      console.log(error)
+      throw new ApplicationError(
+        "error while calculating average ratings of product , category wise",
+        500
+      );
+    }
+  }
+
+  async getOneProduct(req, res) {
+    try {
+      const id = req.params.id;
+
+      const product = await this.productRopository.getProductById(id);
+
+      return res.status(200).send(product);
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError(
+        "error occured while filterting the product with id",
+        500
+      );
+    }
+  }
+
+  async filterProduct(req, res) {
+    try {
+      const { minPrice, category } = req.query;
+
+      const filteredProduct = await this.productRopository.filter(
+        Number(minPrice),
+        // Number(maxPrice),
+        category
+      );
+
+      res.status(200).send(filteredProduct);
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError(
+        "error while filerting out the product in the db",
+        500
+      );
+    }
+  }
+
+  async rateProduct(req, res) {
+    try {
+      const { productId, rate } = req.body;
+      await this.productRopository.rateProduct(req.userId, productId, rate);
+
+      return res.status(200).send("product rated successfully...!");
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError("erro whle rating", 500);
+    }
+  }
 }

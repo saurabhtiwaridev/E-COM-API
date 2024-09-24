@@ -15,6 +15,7 @@ const jwtAuth = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, "zT0vMz91bO");
+    req.userId = payload.userId;
   } catch (error) {
     //4. if error return 401
     return res.status(401).send("Unautrized Request..!!");

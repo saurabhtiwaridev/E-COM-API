@@ -5,10 +5,14 @@ ProductController
 1. Get All Product - DONE
 2. Create a new Product - DONE
 3. Get one Product - DONE
-4. rate a product
+4. rate a product - DONE
 5. filter a product - DONE
+6. add to cart - DONE
+7. get item from cart - DONE
+8. update item from cart - DONE
+9. delete item from cart - DONE
 
 
 UserController
-1. SignUp - (name, email, password, TypeOfUser[customer, seller])
-2. SignIn - (email, password)
+1. SignUp - (name, email, password, TypeOfUser[customer, seller]) - DONE
+2. SignIn - (email, password) - DONE
