@@ -16,3 +16,10 @@ ProductController
 UserController
 1. SignUp - (name, email, password, TypeOfUser[customer, seller]) - DONE
 2. SignIn - (email, password) - DONE
+
+
+
+Relationship
+
+Product  -> Review
+One -> Many

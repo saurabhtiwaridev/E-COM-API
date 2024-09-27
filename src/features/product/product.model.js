@@ -4,7 +4,7 @@ export default class ProductModel {
     this.desc = _desc;
     this.price = _price;
     this.imageUrl = _imageUrl;
-    this.category = _category;
+    this.categories = _category;
     this.size = _size;
     this.stock = _stock;
   }

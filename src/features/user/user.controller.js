@@ -9,7 +9,7 @@ export default class UserController {
     this.usersRepository = new UserRepository();
   }
 
-  async signUp(req, res) {
+  async signUp(req, res, next) {
     try {
       const { name, email, password, type } = req.body;
 
@@ -22,7 +22,7 @@ export default class UserController {
       console.log(userCreated);
       return res.status(201).send(userCreated);
     } catch (error) {
-      throw new ApplicationError("error whle creating the user", 500);
+      next(error)
     }
   }
 
@@ -38,6 +38,8 @@ export default class UserController {
 
         const result = await bcrypt.compare(password, user.password);
 
+        console.log(result);
+
         if (result) {
           // create a jwt token for autentication
           const token = jwt.sign(
@@ -51,8 +53,7 @@ export default class UserController {
               expiresIn: "1h",
             }
           );
-          user.tokens = token;
-          return res.status(200).send(user);
+          return res.status(200).send(token);
         } else {
           return res
             .status(400)
@@ -64,6 +65,21 @@ export default class UserController {
         "error in controller of siging in method",
         500
       );
+    }
+  }
+
+  async resetPassword(req, res, next) {
+    try {
+      const { newPassword } = req.body;
+      const userId = req.userId;
+
+      const hasedPassword = await bcrypt.hash(newPassword, 12);
+      await this.usersRepository.resetUserPassword(hasedPassword, userId);
+
+      return res.status(200).send("successfully reset the password");
+    } catch (error) {
+      console.log(error)
+      throw new ApplicationError("error while resetting the password", 500);
     }
   }
 }

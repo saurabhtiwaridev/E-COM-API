@@ -2,31 +2,54 @@ import { ObjectId } from "mongodb";
 import { getDB } from "../../config/mongodb.js";
 import ApplicationError from "../../error-handling/applicationError.js";
 
+import { ProductSchema } from "./product.schema.js";
+import { ReviewSchema } from "./review.schema.js";
+import { CategorySchema } from "./category.schema.js";
+import mongoose from "mongoose";
+
+const ProductModel = mongoose.model("Product", ProductSchema);
+const ReviewModel = mongoose.model("Review", ReviewSchema);
+const CategoryModel = mongoose.model("Category", CategorySchema);
+
 export default class PorductRepository {
   constructor() {
     this.collection = "products";
   }
-  async addProduct(newProdut) {
+  async addProduct(name, desc, price, categories) {
     try {
-      const db = getDB();
+      categories = categories.split(",").map((cat) => cat.trim());
+      const savedProduct = new ProductModel({
+        name,
+        desc,
+        price,
+        categories,
+      });
+      await savedProduct.save();
 
-      const productsCollection = db.collection(this.collection);
-
-      await productsCollection.insertOne(newProdut);
-
-      return newProdut;
+      await CategoryModel.updateMany(
+        {
+          _id: {
+            $in: categories,
+          },
+        },
+        {
+          $push: {
+            products: savedProduct._id,
+          },
+        }
+      );
+      return savedProduct;
     } catch (error) {
+      console.log(error);
       throw new ApplicationError("error while creating product in the db", 500);
     }
   }
 
   async getAll() {
     try {
-      const db = getDB();
-      const collection = db.collection(this.collection);
-
-      return await collection.find().toArray();
+      return await ProductModel.find();
     } catch (error) {
+      console.log(error);
       throw new ApplicationError("error while creating product in the db", 500);
     }
   }
@@ -135,46 +158,80 @@ export default class PorductRepository {
   //   }
   // }
 
+  // async rateProduct(userId, productId, rate) {
+  //   try {
+  //     const db = getDB();
+
+  //     const collection = db.collection(this.collection);
+
+  //     // first remove the rating if it's exist with pull operator
+
+  //     await collection.updateOne(
+  //       {
+  //         _id: new ObjectId(productId),
+  //       },
+  //       {
+  //         $pull: {
+  //           ratings: {
+  //             userId: new ObjectId(userId),
+  //           },
+  //         },
+  //       }
+  //     );
+
+  //     // then after create a new entry
+
+  //     await collection.updateOne(
+  //       {
+  //         _id: new ObjectId(productId),
+  //       },
+  //       {
+  //         $push: {
+  //           ratings: {
+  //             userId: new ObjectId(userId),
+  //             rate,
+  //           },
+  //         },
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new ApplicationError("error while rating the product", 500);
+  //   }
+  // }
+
   async rateProduct(userId, productId, rate) {
     try {
-      const db = getDB();
+      const productToUpdate = await ProductModel.findById(productId);
 
-      const collection = db.collection(this.collection);
+      console.log(productToUpdate);
 
-      // first remove the rating if it's exist with pull operator
+      if (!productToUpdate) {
+        throw new ApplicationError("no product found with given id", 400);
+      } else {
+        // check if this userId on this product id has already rating
 
-      await collection.updateOne(
-        {
-          _id: new ObjectId(productId),
-        },
-        {
-          $pull: {
-            ratings: {
-              userId: new ObjectId(userId),
-            },
-          },
+        const reviewExist = await ReviewModel.findOne({
+          product: new ObjectId(productId),
+          user: new ObjectId(userId),
+        });
+
+        console.log(reviewExist);
+
+        if (reviewExist) {
+          reviewExist.rating = rate;
+          await reviewExist.save();
+        } else {
+          const newReview = new ReviewModel({
+            user: new ObjectId(userId),
+            product: new ObjectId(productId),
+            rating: rate,
+          });
+          await newReview.save();
         }
-      );
-
-      // then after create a new entry
-
-      await collection.updateOne(
-        {
-          _id: new ObjectId(productId),
-        },
-        {
-          $push: {
-            ratings: {
-              userId: new ObjectId(userId),
-              rate,
-            },
-          },
-        }
-      );
-    } catch (error) {
-      console.log(error);
-      throw new ApplicationError("error while rating the product", 500);
-    }
+      }
+      return;
+    } catch (error) {}
   }
 
   async avergaePriceCategoryWise() {

@@ -1,47 +1,66 @@
-import { getDB } from "../../config/mongodb.js";
+import mongoose from "mongoose";
+import { UserSchema } from "./user.schema.js";
 import ApplicationError from "../../error-handling/applicationError.js";
 
+const UserModel = mongoose.model("User", UserSchema);
+
 export default class UserRepository {
-  constructor() {
-    this.collection = "users";
-  }
-  async createUser(newUser) {
+  async createUser(user) {
     try {
-      // 1. accessing the db
+      // create the instance of UserModel which will link to document
 
-      const db = getDB();
+      const newUser = new UserModel(user);
 
-      // 2. creating a  users collection
-
-      const collection = db.collection(this.collection);
-      
-
-      // 3. add the document into collection
-
-      await collection.insertOne(newUser);
+      await newUser.save();
 
       return newUser;
     } catch (error) {
-      throw new ApplicationError(
-        "error while operating with user collection",
-        500
-      );
+      if (error instanceof mongoose.Error.ValidationError) {
+        throw error;
+      } else {
+        throw new ApplicationError(
+          "error while operating with user collection",
+          500
+        );
+      }
     }
   }
 
   async findUserByEmail(email) {
     try {
-      const db = getDB();
+      const result = await UserModel.findOne({
+        email: email,
+      });
 
-      const collection = db.collection(this.collection);
+      console.log(result);
 
-      return await collection.findOne({ email });
+      return result;
     } catch (error) {
       console.log(error);
       throw new ApplicationError(
         "error while signing in with db operations",
         500
       );
+    }
+  }
+
+  async resetUserPassword(newPassword, userId) {
+    try {
+      const result = await UserModel.updateOne(
+        {
+          _id: userId,
+        },
+        {
+          $set: {
+            password: newPassword,
+          },
+        }
+      );
+
+      return result;
+    } catch (error) {
+      console.log(error);
+      throw new ApplicationError("error while resetting the password", 500);
     }
   }
 }

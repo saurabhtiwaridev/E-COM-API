@@ -12,6 +12,7 @@ import loggerMiddleware from "./src/middlewares/logger.middleware.js";
 import { connectToMongoDB } from "./src/config/mongodb.js";
 import { appLevelErrorMiddleware } from "./src/error-handling/applicationError.js";
 import orderRouter from "./src/features/order/order.router.js";
+import { connectToMongoose } from "./src/config/mongooseConfig.js";
 
 const port = process.env.PORT || 4200;
 
@@ -67,5 +68,6 @@ server.use((req, res) => {
 
 server.listen(port, () => {
   console.log("server is listening on port", port);
-  connectToMongoDB();
+  // connectToMongoDB();
+  connectToMongoose();
 });

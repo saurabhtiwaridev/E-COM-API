@@ -22,19 +22,15 @@ export default class ProductController {
 
   async createNewProduct(req, res) {
     try {
-      const { name, desc, price, category, size } = req.body;
+      const { name, desc, price, categories } = req.body;
 
-      const newProduct = new ProductModel(
+      const savedProduct = await this.productRopository.addProduct(
         name,
         desc,
-        parseFloat(price),
-        req.file.filename,
-        category,
-        size?.split(",")
+        price,
+        categories
       );
-
-      const product = await this.productRopository.addProduct(newProduct);
-      res.status(201).send(product);
+      return res.status(201).send(savedProduct);
     } catch (error) {
       console.log(error);
       throw new ApplicationError("error in creating product", 500);
@@ -73,7 +69,7 @@ export default class ProductController {
 
       return res.status(200).send(result);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       throw new ApplicationError(
         "error while calculating average ratings of product , category wise",
         500
